@@ -31,7 +31,7 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Zsh as the default shell for the user by modifying /etc/passwd
-RUN sed -i "s|/home/$USERNAME:/bin/sh|/home/$USERNAME:/usr/bin/zsh|" /etc/passwd
+RUN sed -i "s|/home/${USERNAME}:/bin/sh|/home/${USERNAME}:/usr/bin/zsh|" /etc/passwd
 
 # Switch to non-root user
 USER $USERNAME
@@ -57,29 +57,27 @@ RUN echo 'if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%
     && echo "source \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ~/.zshrc \
     && echo "source ~/.p10k.zsh" >> ~/.zshrc
 
-WORKDIR /code
-
-COPY --chown=$USERNAME:$USER_GID requirements.txt /code/
+# Set the working directory
+ENV WORKDIR_PATH=/code
+WORKDIR $WORKDIR_PATH
+    
+COPY --chown=$USERNAME:$USER_GID ./requirements.txt ./
 RUN python3 -m pip install --upgrade pip \
     && pip install --no-cache-dir --upgrade --disable-pip-version-check -r requirements.txt 
 
-COPY --chown=$USERNAME:$USER_GID src/ /code/
+COPY --chown=$USERNAME:$USER_GID ./src ./src
 
 # Install Jupyter
 RUN pip install jupyter
 
 # Copy the SSH keys (Ensure .ssh directory exists in the build context)
-COPY --chown=$USERNAME:$USER_GID .ssh/ssh_key* /home/$USERNAME/.ssh/
-RUN chmod 700 /home/$USERNAME/.ssh && chmod 600 /home/$USERNAME/.ssh/* && chmod 644 /home/$USERNAME/.ssh/*.pub
+COPY --chown=$USERNAME:$USER_GID .ssh/ssh_key* /home/${USERNAME}/.ssh/
+RUN chmod 700 /home/${USERNAME}/.ssh && chmod 600 /home/${USERNAME}/.ssh/* && chmod 644 /home/${USERNAME}/.ssh/*.pub
 
 # Add SSH key to the SSH agent
-RUN echo "eval \$(ssh-agent -s) && ssh-add /home/$USERNAME/.ssh/ssh_key" >> /home/$USERNAME/.zshrc
-
-# Create logs directory and ensure proper permissions
-RUN mkdir -p /code/logs && chown -R $USERNAME:$USER_GID /code/logs
+RUN echo "eval \$(ssh-agent -s) && ssh-add /home/${USERNAME}/.ssh/ssh_key" >> /home/${USERNAME}/.zshrc
 
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
-USER $USERNAME
 
 # Start the main application and keep the container running
-CMD ["sh", "-c", "python main.py & tail -f /dev/null"]
+CMD ["sh", "-c", "python /${WORKDIR_PATH}/src/main.py & tail -f /dev/null"]

@@ -80,4 +80,4 @@ RUN echo "eval \$(ssh-agent -s) && ssh-add /home/${USERNAME}/.ssh/ssh_key" >> /h
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # Start the main application and keep the container running
-CMD ["sh", "-c", "python /${WORKDIR_PATH}/src/main.py & tail -f /dev/null"]
+CMD ["sh", "-c", "python src/main.py & tail -f /dev/null"]

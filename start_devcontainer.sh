@@ -1,36 +1,14 @@
 #!/bin/bash
 
 # Define the project name
-project_name="HotDeals"
+project_name=${1:-HotDeals}
 
 # Function to print usage
 print_usage() {
-  echo "Usage: $0 [environment]"
-  echo "environment: development | dev | production | final"
+  echo "Usage: $0 [Project Name] [Environment]"
+  echo "environment: development | dev | production | prod"
   exit 1
 }
-
-# Set default environment if not provided
-environment=${1:-development}
-target=$environment
-
-# Validate the environment argument
-if [[ "$environment" != "development" && "$environment" != "dev" && "$environment" != "production" ]]; then
-  echo "Error: Invalid environment '$environment'."
-  print_usage
-fi
-
-if [[ "$environment" == "dev" ]]; then
-  target=development
-fi
-
-if [[ "$environment" == "production" ]]; then
-  target=final
-fi
-
-# Use sed command searches for the "name" key and replaces its value with the project_name
-sed -i.bak -E "s/\"name\": \"[^\"]+\"/\"name\": \"$project_name\"/" .devcontainer/devcontainer.json
-rm .devcontainer/devcontainer.json.bak
 
 # Define the project name and image tag
 # Convert to lowercase
@@ -38,8 +16,31 @@ project=$(echo "$project_name" | tr '[:upper:]' '[:lower:]')
 # Replace spaces with underscores
 project="${project// /_}"
 
-image_tag="$project-image"
 workspace_folder="/code"
+
+# Set default environment if not provided
+environment=${2:-development}
+target=$environment
+
+# Validate the environment argument
+if [[ "$environment" != "development" && "$environment" != "dev" && "$environment" != "production" && "$environment" != "prod" ]]; then
+  echo "Error: Invalid environment '$environment'."
+  print_usage
+fi
+
+if [[ "$environment" == "dev" ]] || [[ "$environment" == "development" ]]; then
+  target=development
+  image_tag="$project-dev-image"
+fi
+
+if [[ "$environment" == "prod" ]] || [[ "$environment" == "production" ]]; then
+  target=production
+  image_tag="$project-prod-image"
+fi
+
+# Use sed command searches for the "name" key and replaces its value with the project_name
+sed -i.bak -E "s/\"name\": \"[^\"]+\"/\"name\": \"$project_name\"/" .devcontainer/devcontainer.json
+rm .devcontainer/devcontainer.json.bak
 
 # Define the Dockerfile and context directory
 dockerfile_path=".devcontainer/Dockerfile"

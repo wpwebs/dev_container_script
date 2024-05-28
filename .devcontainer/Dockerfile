@@ -92,8 +92,8 @@ RUN pip install jupyter
 # Start the main application and keep the container running
 CMD ["sh", "-c", "python src/main.py & tail -f /dev/null"]
 
-# Stage 3: Final stage
-FROM base AS final
+# Stage 3: Production stage
+FROM base AS production
 ARG ENVIRONMENT
 ARG USERNAME
 
